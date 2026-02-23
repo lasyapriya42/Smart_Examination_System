@@ -10,7 +10,6 @@ export default function LandingPage() {
 
       <header className="hero" id="top">
         <div className="hero-content">
-          <p className="eyebrow">Examination Management System</p>
           <h1>
             Smart Examination
             <span>Management System</span>
@@ -33,7 +32,7 @@ export default function LandingPage() {
           <article className="feature-card">
             <div className="icon-badge">📘</div>
             <h3>Digital Examination</h3>
-            <p>
+            <p> 
               Conduct secure online exams with timer-based submissions and
               auto-grading.
             </p>

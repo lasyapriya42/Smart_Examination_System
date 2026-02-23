@@ -4,8 +4,7 @@ export default function NavBar() {
       <div className="brand">
         <span className="logo">🎓</span>
         <div>
-          <strong>ExamSmart</strong>
-          <span>Examination Management System</span>
+          <strong>Smart Examination Management</strong>
         </div>
       </div>
       <div className="links">

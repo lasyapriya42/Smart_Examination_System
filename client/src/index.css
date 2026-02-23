@@ -1092,3 +1092,517 @@ pre {
   font-size: 0.9rem;
   color: #6b7280;
 }
+/* ===== STUDENT FORM ===== */
+
+.student-form-card {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+}
+
+.student-form-card h3 {
+  margin-bottom: 15px;
+}
+
+.student-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  align-items: end;
+  margin-bottom: 30px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 14px;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #7c3aed;
+}
+
+.add-student-btn {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 400px;
+  margin: 20px auto 0;
+  padding: 12px 40px;
+  background-color: #7c3aed;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  height: auto;
+  display: block;
+  transition: all 0.3s ease;
+}
+
+.add-student-btn:hover {
+  background-color: #6d28d9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.student-year-card {
+  background: #ffffff;
+  padding: 18px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+}
+
+.student-dept-block {
+  margin-top: 10px;
+  margin-left: 15px;
+}
+
+.student-subnav {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.student-subnav button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #f3f4f6;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.student-subnav button:hover {
+  background: #e5e7eb;
+}
+
+.active-subtab {
+  background-color: #7c3aed !important;
+  color: white;
+  border-color: #7c3aed;
+}
+
+.student-drill {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.drill-select {
+  display: flex;
+  flex-direction: column;
+}
+
+.drill-select select {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.staff-drill {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* ========== STAFF VIEW CONTAINER ========== */
+.staff-view-container {
+  margin-top: 20px;
+}
+
+.staff-view-container .page-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.staff-view-container h2 {
+  margin: 0 0 8px;
+  font-size: 1.8rem;
+  color: #111827;
+}
+
+.staff-view-container p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.department-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.dept-card-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  font-weight: 500;
+}
+
+.dept-card-btn:hover {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  border-color: #667eea;
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(102, 126, 234, 0.15);
+}
+
+.dept-card-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.4);
+  transform: translateY(-6px);
+}
+
+.dept-icon {
+  font-size: 2.5rem;
+}
+
+.dept-name {
+  display: block;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.dept-card-btn.active .dept-name {
+  color: white;
+}
+
+.staff-designation-info {
+  display: inline-block;
+  color: #667eea;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-top: 8px;
+  padding: 4px 8px;
+  background: #f0f4ff;
+  border-radius: 6px;
+}
+
+.staff-phone-info {
+  display: block;
+  color: #059669;
+  font-size: 0.85rem;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.no-staff-message {
+  text-align: center;
+  color: #6b7280;
+  padding: 40px 20px;
+  font-size: 1rem;
+}
+
+.student-year-card ul {
+  list-style: none;
+}
+
+.student-year-card ul li {
+  padding: 16px;
+  margin: 10px 0;
+  background: #f9fafb;
+  border-left: 4px solid #667eea;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.student-year-card ul li:hover {
+  background: #f3f4f6;
+  transform: translateX(4px);
+}
+
+/* ========== SELECTION PAGE STYLES ========== */
+.selection-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 20px;
+}
+
+.selection-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 30px;
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  background: #e5e7eb;
+  transform: translateX(-4px);
+}
+
+.selection-page .page-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.selection-page .page-header h1 {
+  font-size: 2rem;
+  margin: 0 0 8px;
+  color: #111827;
+}
+
+.selection-page .page-header p {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.selection-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 30px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #ffffff;
+  font-weight: 600;
+  min-height: 150px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.selection-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 25px rgba(102, 126, 234, 0.5);
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.card-icon {
+  font-size: 2.5rem;
+}
+
+.card-text {
+  font-size: 1rem;
+  text-align: center;
+}
+
+.no-data {
+  text-align: center;
+  color: #6b7280;
+  padding: 40px 20px;
+  font-size: 1rem;
+}
+
+/* ========== STUDENTS LIST STYLES ========== */
+.students-list-container {
+  margin-top: 30px;
+}
+
+.students-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.student-item {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.student-item:hover {
+  background: #ffffff;
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.student-info {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.student-roll {
+  font-weight: 600;
+  color: #667eea;
+  font-size: 0.9rem;
+  min-width: 80px;
+}
+
+.student-details {
+  flex: 1;
+}
+
+.student-details h4 {
+  margin: 0 0 4px;
+  color: #111827;
+  font-size: 1rem;
+}
+
+.student-details p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* ========== VIEW STUDENTS INFO ========== */
+.view-students-info {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.view-students-info .page-header {
+  margin-bottom: 30px;
+}
+
+.navigate-btn {
+  padding: 14px 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.navigate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* ========== STUDENT DIRECTORY CARD ========== */
+.view-students-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 48px 40px;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.view-students-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.15);
+  transform: translateY(-4px);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.card-title-icon {
+  font-size: 2.5rem;
+}
+
+.card-header h2 {
+  margin: 0;
+  font-size: 2rem;
+  color: #111827;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.card-description {
+  color: #6b7280;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 32px;
+}
+
+.primary-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1.05rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+.primary-action-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.primary-action-btn:active {
+  transform: translateY(-1px);
+}
