@@ -386,6 +386,38 @@ export default function AdminDashboard() {
           </button>
 
         </form>
+        <div style={{ marginTop: "20px" }}>
+  <h4>📂 Bulk Upload Students (CSV)</h4>
+
+  <input
+    type="file"
+    accept=".csv"
+    onChange={async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await axios.post(
+          "http://localhost:5000/api/upload/students",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        alert(res.data.message + " (" + res.data.count + " students)");
+      } catch (err) {
+        console.error(err);
+        alert("Upload failed");
+      }
+    }}
+  />
+</div>
       </div>
     )}
 

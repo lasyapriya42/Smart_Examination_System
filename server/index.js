@@ -13,29 +13,18 @@ import resultRoutes from "./routes/results.js";
 import analyticsRoutes from "./routes/analytics.js";
 import blockRoutes, { roomRouter } from "./routes/blocks.js";
 import roomRoutes from "./routes/rooms.js";
+import bulkUploadRoutes from "./routes/bulkUpload.js";
+import { connectDB } from "./config/db.js";
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+connectDB();
 app.use("/api/student", studentRoutes);
 app.use("/api/rooms", roomRoutes);
-
-const { MONGODB_URI, PORT = 5000 } = process.env;
-
-if (MONGODB_URI) {
-  mongoose
-    .connect(MONGODB_URI)
-    .then(() => {
-      console.log("MongoDB connected");
-    })
-    .catch((error) => {
-      console.error("MongoDB connection error:", error.message);
-    });
-} else {
-  console.warn("MONGODB_URI not set. Skipping database connection.");
-}
+app.use("/api/upload", bulkUploadRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -53,6 +42,8 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/blocks", blockRoutes);
 app.use("/api/rooms", roomRouter);
 
+
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
