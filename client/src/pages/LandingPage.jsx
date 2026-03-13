@@ -62,7 +62,7 @@ export default function LandingPage() {
         <div className="portal-grid">
           <article
             className="portal-card portal-admin"
-            onClick={() => navigate("/login/admin")}
+            onClick={() => navigate("/login/principal")}
           >
             <div className="portal-icon">🛡️</div>
             <div>
@@ -81,19 +81,19 @@ export default function LandingPage() {
           </article>
           <article
             className="portal-card portal-hod"
-            onClick={() => navigate("/login/hod")}
+            onClick={() => navigate("/login/staff")}
           >
             <div className="portal-icon">👥</div>
             <div>
-              <h3>HOD</h3>
+              <h3>Staff</h3>
               <p>
-                Department management, faculty oversight, and question paper
-                approval.
+                Staff access for department activities, exam support,
+                and operational workflows.
               </p>
               <ul>
-                <li>Faculty Management</li>
-                <li>Question Bank</li>
-                <li>Performance Analysis</li>
+                <li>Department Support</li>
+                <li>Exam Operations</li>
+                <li>Reports</li>
               </ul>
             </div>
             <span className="portal-arrow">→</span>

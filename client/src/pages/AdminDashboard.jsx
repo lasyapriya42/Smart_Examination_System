@@ -1,15 +1,18 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
 
 export default function AdminDashboard() {
+  const [feedback, setFeedback] = useState({ type: "", text: "" });
+
   // ========== STUDENT FORM ==========
   const [studentFormData, setStudentFormData] = useState({
     name: "",
     rollNo: "",
     email: "",
     year: "",
+    semester: "",
     department: "",
     section: "",
   });
@@ -41,27 +44,29 @@ export default function AdminDashboard() {
   const handleStudentSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/api/student", studentFormData);
-      alert("Student added successfully!");
+      await axios.post("http://localhost:5000/api/students", studentFormData);
+      showFeedback("success", "Student added successfully");
       setStudentFormData({
         name: "",
         rollNo: "",
         email: "",
         year: "",
+        semester: "",
         department: "",
         section: "",
       });
       // Refresh student data
       try {
-        const response = await axios.get("http://localhost:5000/api/student/grouped");
+        const response = await axios.get("http://localhost:5000/api/students/grouped");
         console.log("Student data refreshed:", response.data);
         setStudentData(response.data);
+        loadDashboardMetrics();
       } catch (error) {
         console.error("Error fetching student data:", error);
       }
     } catch (error) {
       console.error(error);
-      alert("Error adding student");
+      showFeedback("error", "Error adding student");
     }
   };
 
@@ -69,7 +74,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     try {
       await axios.post("http://localhost:5000/api/staff", staffFormData);
-      alert("Staff added successfully!");
+      showFeedback("success", "Staff added successfully");
       setStaffFormData({
         name: "",
         staffId: "",
@@ -83,12 +88,13 @@ export default function AdminDashboard() {
         const response = await axios.get("http://localhost:5000/api/staff/grouped");
         console.log("Staff data refreshed:", response.data);
         setStaffData(response.data);
+        loadDashboardMetrics();
       } catch (error) {
         console.error("Error fetching staff data:", error);
       }
     } catch (error) {
       console.error(error);
-      alert("Error adding staff");
+      showFeedback("error", "Error adding staff");
     }
   };
 
@@ -105,6 +111,7 @@ export default function AdminDashboard() {
 
   // ========== STUDENT DATA ==========
   const [studentData, setStudentData] = useState({});
+  const [studentViewSearch, setStudentViewSearch] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
   const [selectedDept, setSelectedDept] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
@@ -118,13 +125,98 @@ export default function AdminDashboard() {
   const [roomsData, setRoomsData] = useState([]);
   const [blockForm, setBlockForm] = useState({ name: "" });
   const [roomForm, setRoomForm] = useState({ number: "", block: "", capacity: "" });
+  const [metrics, setMetrics] = useState({ students: 0, staff: 0, blocks: 0, rooms: 0 });
+
+  const showFeedback = (type, text) => {
+    setFeedback({ type, text });
+    setTimeout(() => setFeedback({ type: "", text: "" }), 2500);
+  };
+
+  const handleBulkStudentUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/upload/students",
+        formData
+      );
+
+      const skipped = res.data?.skipped || 0;
+      const invalidCount = res.data?.invalidRows?.length || 0;
+      alert(
+        `${res.data.message} (${res.data.count} inserted, ${skipped} duplicates skipped, ${invalidCount} invalid rows)`
+      );
+
+      const groupedRes = await axios.get("http://localhost:5000/api/students/grouped");
+      setStudentData(groupedRes.data || {});
+      loadDashboardMetrics();
+    } catch (err) {
+      console.error(err);
+      const message = err?.response?.data?.message || "Upload failed";
+      const missingColumns = err?.response?.data?.missingColumns;
+
+      if (Array.isArray(missingColumns) && missingColumns.length > 0) {
+        alert(`${message}: ${missingColumns.join(", ")}`);
+      } else {
+        alert(message);
+      }
+    } finally {
+      // Allow selecting the same file again if user retries.
+      e.target.value = "";
+    }
+  };
+
+  const handleDeleteAllStudents = async () => {
+    const confirmed = window.confirm(
+      "This will permanently delete all student records. Continue?"
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/students/delete-bulk", {});
+      alert(`${res.data.message} (${res.data.deletedCount} deleted)`);
+      setStudentData({});
+      loadDashboardMetrics();
+    } catch (error) {
+      console.error(error);
+      alert(error?.response?.data?.message || "Failed to delete students");
+    }
+  };
+
+  const loadDashboardMetrics = async () => {
+    try {
+      const [studentsRes, staffRes, blocksRes, roomsRes] = await Promise.all([
+        axios.get("http://localhost:5000/api/students"),
+        axios.get("http://localhost:5000/api/staff"),
+        axios.get("http://localhost:5000/api/blocks"),
+        axios.get("http://localhost:5000/api/rooms"),
+      ]);
+
+      setMetrics({
+        students: studentsRes.data?.length || 0,
+        staff: staffRes.data?.length || 0,
+        blocks: blocksRes.data?.length || 0,
+        rooms: roomsRes.data?.length || 0,
+      });
+    } catch (error) {
+      console.error("Error loading metrics", error);
+    }
+  };
   
 
   // ========== FETCH STUDENTS & STAFF ==========
   useEffect(() => {
+    loadDashboardMetrics();
+  }, []);
+
+  useEffect(() => {
     if (activeSection === "students") {
       axios
-        .get("http://localhost:5000/api/student/grouped")
+        .get("http://localhost:5000/api/students/grouped")
         .then((res) => setStudentData(res.data))
         .catch((err) => console.log(err));
     }
@@ -147,6 +239,7 @@ export default function AdminDashboard() {
          .then((res) => {
            console.log("Blocks loaded:", res.data);
            setBlocksData(res.data || []);
+           loadDashboardMetrics();
          })
          .catch((err) => console.error("Error loading blocks:", err));
 
@@ -160,6 +253,74 @@ export default function AdminDashboard() {
          .catch((err) => console.error("Error loading rooms:", err));
      }
    }, [activeSection]);
+
+  const sortLabel = (a, b) =>
+    String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
+
+  const branchSectionData = useMemo(() => {
+    const grouped = {};
+
+    Object.entries(studentData || {}).forEach(([yearKey, deptMap]) => {
+      Object.entries(deptMap || {}).forEach(([deptKey, sectionMap]) => {
+        const branch = String(deptKey || "NA");
+        if (!grouped[branch]) grouped[branch] = {};
+
+        Object.entries(sectionMap || {}).forEach(([sectionKey, students]) => {
+          const section = String(sectionKey || "NA");
+          if (!grouped[branch][section]) grouped[branch][section] = [];
+
+          (students || []).forEach((student) => {
+            grouped[branch][section].push({
+              ...student,
+              year: student.year ?? yearKey,
+              department: student.department ?? branch,
+              section: student.section ?? section,
+            });
+          });
+
+          grouped[branch][section].sort((a, b) =>
+            String(a.rollNo || "").localeCompare(String(b.rollNo || ""), undefined, {
+              numeric: true,
+              sensitivity: "base",
+            })
+          );
+        });
+      });
+    });
+
+    return grouped;
+  }, [studentData]);
+
+  const availableBranches = useMemo(
+    () => Object.keys(branchSectionData).sort(sortLabel),
+    [branchSectionData]
+  );
+
+  const availableSections = useMemo(
+    () => Object.keys(branchSectionData[selectedDept] || {}).sort(sortLabel),
+    [branchSectionData, selectedDept]
+  );
+
+  const selectedBranchSectionStudents = useMemo(() => {
+    const selected = branchSectionData[selectedDept]?.[selectedSection] || [];
+    const keyword = studentViewSearch.trim().toLowerCase();
+
+    if (!keyword) return selected;
+
+    return selected.filter((student) =>
+      [student.name, student.rollNo, student.email]
+        .map((v) => String(v || "").toLowerCase())
+        .some((v) => v.includes(keyword))
+    );
+  }, [branchSectionData, selectedDept, selectedSection, studentViewSearch]);
+
+  // Reset section when branch is cleared
+  useEffect(() => {
+    if (!selectedDept) {
+      setSelectedSection("");
+      setStudentViewSearch("");
+    }
+  }, [selectedDept]);
 
   
   return (
@@ -184,7 +345,7 @@ export default function AdminDashboard() {
 
           {/* Dashboard */}
           <button
-            className="nav-item"
+            className={`nav-item ${activeSection === "dashboard" ? "active" : ""}`}
             onClick={() => setActiveSection("dashboard")}
           >
             <span>📊</span> Dashboard
@@ -192,7 +353,7 @@ export default function AdminDashboard() {
 
           {/* Student Module */}
           <button
-            className="nav-item"
+            className={`nav-item ${activeSection === "students" ? "active" : ""}`}
             onClick={() => setActiveSection("students")}
           >
             <span>👥</span> Student Management
@@ -200,7 +361,7 @@ export default function AdminDashboard() {
 
           {/* Staff Module */}
           <button
-            className="nav-item"
+            className={`nav-item ${activeSection === "staff" ? "active" : ""}`}
             onClick={() => setActiveSection("staff")}
           >
             <span>👨‍💼</span> Staff Management
@@ -208,7 +369,7 @@ export default function AdminDashboard() {
  
            {/* Blocks & Rooms Module (Admin only) */}
            <button
-             className="nav-item"
+             className={`nav-item ${activeSection === "blocks" ? "active" : ""}`}
              onClick={() => setActiveSection("blocks")}
            >
              <span>🏫</span> Blocks & Rooms
@@ -244,6 +405,9 @@ export default function AdminDashboard() {
         </header>
 
         <div className="dashboard-content">
+          {feedback.text && (
+            <div className={`admin-feedback ${feedback.type}`}>{feedback.text}</div>
+          )}
 
           {/* ===================================================== */}
           {/* ================= DASHBOARD VIEW ==================== */}
@@ -261,31 +425,37 @@ export default function AdminDashboard() {
               <div className="stats-grid">
                 <div className="stat-card">
                   <div className="stat-header">
-                    <span>Total Users</span>
+                    <span>Total Students</span>
                   </div>
-                  <div className="stat-value">1,234</div>
+                  <div className="stat-value">{metrics.students}</div>
                 </div>
 
                 <div className="stat-card">
                   <div className="stat-header">
-                    <span>Active Students</span>
+                    <span>Total Staff</span>
                   </div>
-                  <div className="stat-value">856</div>
+                  <div className="stat-value">{metrics.staff}</div>
                 </div>
 
                 <div className="stat-card">
                   <div className="stat-header">
-                    <span>Departments</span>
+                    <span>Total Blocks</span>
                   </div>
-                  <div className="stat-value">12</div>
+                  <div className="stat-value">{metrics.blocks}</div>
                 </div>
 
                 <div className="stat-card">
                   <div className="stat-header">
-                    <span>Exams Scheduled</span>
+                    <span>Total Rooms</span>
                   </div>
-                  <div className="stat-value">24</div>
+                  <div className="stat-value">{metrics.rooms}</div>
                 </div>
+              </div>
+
+              <div className="admin-quick-actions">
+                <button onClick={() => setActiveSection("students")}>Go To Students</button>
+                <button onClick={() => setActiveSection("staff")}>Go To Staff</button>
+                <button onClick={() => setActiveSection("blocks")}>Go To Blocks & Rooms</button>
               </div>
             </>
           )}
@@ -352,6 +522,21 @@ export default function AdminDashboard() {
           </div>
 
           <div className="form-group">
+            <label>Semester</label>
+            <select name="semester" value={studentFormData.semester} onChange={handleStudentChange} required>
+              <option value="">Select Semester</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+            </select>
+          </div>
+
+          <div className="form-group">
             <label>Department</label>
             <select name="department" value={studentFormData.department} onChange={handleStudentChange} required>
               <option value="">Select Department</option>
@@ -387,36 +572,22 @@ export default function AdminDashboard() {
 
         </form>
         <div style={{ marginTop: "20px" }}>
-  <h4>📂 Bulk Upload Students (CSV)</h4>
+  <h4>📂 Bulk Upload Students (CSV / Excel)</h4>
 
   <input
     type="file"
-    accept=".csv"
-    onChange={async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        const res = await axios.post(
-          "http://localhost:5000/api/upload/students",
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-
-        alert(res.data.message + " (" + res.data.count + " students)");
-      } catch (err) {
-        console.error(err);
-        alert("Upload failed");
-      }
-    }}
+    accept=".csv,.xlsx,.xls,.pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf"
+    onChange={handleBulkStudentUpload}
   />
+  <div style={{ marginTop: "12px" }}>
+    <button
+      type="button"
+      className="btn-danger"
+      onClick={handleDeleteAllStudents}
+    >
+      Delete All Students
+    </button>
+  </div>
 </div>
       </div>
     )}
@@ -429,14 +600,136 @@ export default function AdminDashboard() {
       <h2>Student Directory</h2>
     </div>
     <p className="card-description">
-      Access comprehensive student records organized by academic year, department, and section. Browse and manage student information efficiently.
+      Select a branch and section identified from MongoDB records.
     </p>
-    <button
-      className="primary-action-btn"
-      onClick={() => navigate("/select-year")}
-    >
-      <span>🔍</span> Search Students
-    </button>
+
+    {/* State 1: No branch selected — show branch cards */}
+    {!selectedDept && (
+      <>
+        <h4 style={{ marginTop: "14px", marginBottom: "8px" }}>Branches</h4>
+        <div className="selection-grid" style={{ marginBottom: "14px" }}>
+          {availableBranches.length > 0 ? (
+            availableBranches.map((branch) => (
+              <button
+                key={branch}
+                type="button"
+                className="selection-card"
+                onClick={() => {
+                  setSelectedDept(branch);
+                  setSelectedSection("");
+                  setStudentViewSearch("");
+                }}
+              >
+                <span className="card-icon">🏢</span>
+                <span className="card-text">{branch}</span>
+              </button>
+            ))
+          ) : (
+            <p className="no-data">No branches found in database.</p>
+          )}
+        </div>
+      </>
+    )}
+
+    {/* State 2: Branch selected, no section — show section cards */}
+    {selectedDept && !selectedSection && (
+      <>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "14px" }}>
+          <h4 style={{ margin: 0 }}>Sections — {selectedDept}</h4>
+          <button
+            type="button"
+            className="btn-muted"
+            onClick={() => {
+              setSelectedDept("");
+              setSelectedSection("");
+              setStudentViewSearch("");
+            }}
+          >
+            ← Change Branch
+          </button>
+        </div>
+        <div className="selection-grid" style={{ marginBottom: "14px", marginTop: "8px" }}>
+          {availableSections.length > 0 ? (
+            availableSections.map((section) => (
+              <button
+                key={section}
+                type="button"
+                className="selection-card"
+                onClick={() => {
+                  setSelectedSection(section);
+                  setStudentViewSearch("");
+                }}
+              >
+                <span className="card-icon">👥</span>
+                <span className="card-text">Section {section}</span>
+                <span className="card-sub">{(branchSectionData[selectedDept]?.[section] || []).length} students</span>
+              </button>
+            ))
+          ) : (
+            <p className="no-data">No sections found for this branch.</p>
+          )}
+        </div>
+      </>
+    )}
+
+    {/* State 3: Branch + Section selected — show student details */}
+    {selectedDept && selectedSection && (
+      <>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "14px", marginBottom: "12px" }}>
+          <div>
+            <h4 style={{ margin: 0 }}>{selectedDept} — Section {selectedSection}</h4>
+            <span style={{ fontSize: "13px", color: "#666" }}>
+              {selectedBranchSectionStudents.length} student{selectedBranchSectionStudents.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="btn-muted"
+            onClick={() => {
+              setSelectedSection("");
+              setStudentViewSearch("");
+            }}
+          >
+            ← Back to Sections
+          </button>
+        </div>
+
+        <div className="manage-toolbar" style={{ marginBottom: "12px" }}>
+          <input
+            className="manage-search"
+            type="text"
+            placeholder="Search by name, roll no, or email"
+            value={studentViewSearch}
+            onChange={(e) => setStudentViewSearch(e.target.value)}
+          />
+          <span className="manage-count">Total: {selectedBranchSectionStudents.length}</span>
+        </div>
+
+        {selectedBranchSectionStudents.length > 0 ? (
+          <div className="students-list-container">
+            <ul className="students-list">
+              {selectedBranchSectionStudents.map((student, idx) => (
+                <li key={student._id || `${student.rollNo}-${student.email}`} className="student-item">
+                  <div className="student-serial">{idx + 1}</div>
+                  <div className="student-info">
+                    <div className="student-roll">{student.rollNo}</div>
+                    <div className="student-details">
+                      <h4>{student.name}</h4>
+                      <p className="student-email">{student.email}</p>
+                      <p className="student-meta">
+                        Dept: {student.department} &nbsp;|&nbsp; Section: {student.section} &nbsp;|&nbsp; Sem {student.semester}
+                      </p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="no-data">No students found{studentViewSearch ? " for your search" : ""}.</p>
+        )}
+      </>
+    )}
   </div>
 )}
 
@@ -458,25 +751,26 @@ export default function AdminDashboard() {
            <h3>View & Manage Blocks</h3>
            
            {/* ========== ADD NEW BLOCK FORM ========== */}
-           <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f0f9ff', borderRadius: '8px', border: '2px solid #0ea5e9' }}>
-             <h4 style={{ marginTop: 0, color: '#0284c7' }}>➕ Add New Block</h4>
+           <div className="block-form-wrap">
+             <h4 className="block-form-title">➕ Add New Block</h4>
              <form onSubmit={async (e) => {
                e.preventDefault();
                if (!blockForm.name.trim()) {
-                 alert("Block name cannot be empty");
+                 showFeedback("error", "Block name cannot be empty");
                  return;
                }
                try {
                  await axios.post("http://localhost:5000/api/blocks", blockForm);
-                 alert("Block added successfully!");
+                 showFeedback("success", "Block added successfully");
                  setBlockForm({ name: "" });
                  const res = await axios.get("http://localhost:5000/api/blocks");
                  setBlocksData(res.data || []);
+                 loadDashboardMetrics();
                } catch (err) {
                  console.error(err);
-                 alert("Error adding block");
+                 showFeedback("error", "Error adding block");
                }
-             }} style={{ display: 'flex', gap: '10px' }}>
+             }} className="block-form-inline">
                <input
                  type="text"
                  value={blockForm.name}
@@ -484,9 +778,9 @@ export default function AdminDashboard() {
                  onChange={(e) => setBlockForm({ ...blockForm, [e.target.name]: e.target.value })}
                  placeholder="e.g., A, B, C, D"
                  required
-                 style={{ flex: 1, padding: '10px', border: '1px solid #0ea5e9', borderRadius: '4px' }}
+                 className="block-name-input"
                />
-               <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#0284c7', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+               <button type="submit" className="block-add-btn">
                  + Add Block
                </button>
              </form>
@@ -494,7 +788,7 @@ export default function AdminDashboard() {
 
            {/* ========== BLOCKS LIST ========== */}
            {blocksData && blocksData.length > 0 ? (
-             <div style={{ marginTop: '20px' }}>
+             <div className="blocks-list-wrap">
                {blocksData.map((block) => {
                  const blockRooms = roomsData.filter(room => 
                    (room.block && typeof room.block === 'object' && room.block._id === block._id) ||
@@ -502,36 +796,14 @@ export default function AdminDashboard() {
                  );
                  
                  return (
-                   <div key={block._id} style={{ marginBottom: '12px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                   <div key={block._id} className="block-row">
                      {/* Block Header - Clickable to Navigate */}
                      <button
                        onClick={() => navigate("/admin/block-rooms", { state: { block } })}
-                       style={{
-                         flex: 1,
-                         padding: '16px',
-                         border: '2px solid #7c3aed',
-                         borderRadius: '8px',
-                         backgroundColor: '#f8f6ff',
-                         color: '#7c3aed',
-                         fontSize: '16px',
-                         fontWeight: 'bold',
-                         cursor: 'pointer',
-                         display: 'flex',
-                         justifyContent: 'space-between',
-                         alignItems: 'center',
-                         transition: 'all 0.3s ease'
-                       }}
-                       onMouseEnter={(e) => {
-                         e.target.style.backgroundColor = '#7c3aed';
-                         e.target.style.color = 'white';
-                       }}
-                       onMouseLeave={(e) => {
-                         e.target.style.backgroundColor = '#f8f6ff';
-                         e.target.style.color = '#7c3aed';
-                       }}
+                       className="block-open-btn"
                      >
                        <span>📦 Block {block.name}</span>
-                       <span style={{ fontSize: '14px' }}>{blockRooms.length} rooms</span>
+                       <span className="block-room-count">{blockRooms.length} rooms</span>
                      </button>
 
                      {/* Delete Button */}
@@ -540,33 +812,19 @@ export default function AdminDashboard() {
                          if (window.confirm(`Delete Block ${block.name}? This will also delete all rooms in this block.`)) {
                            try {
                              await axios.delete(`http://localhost:5000/api/blocks/${block._id}`);
-                             alert("Block deleted successfully!");
+                             showFeedback("success", "Block deleted successfully");
                              const res = await axios.get("http://localhost:5000/api/blocks");
                              setBlocksData(res.data || []);
                              const roomsRes = await axios.get("http://localhost:5000/api/rooms");
                              setRoomsData(roomsRes.data || []);
+                             loadDashboardMetrics();
                            } catch (err) {
                              console.error(err);
-                             alert("Error deleting block");
+                             showFeedback("error", "Error deleting block");
                            }
                          }
                        }}
-                       style={{
-                         padding: '12px 16px',
-                         backgroundColor: '#ef4444',
-                         color: 'white',
-                         border: 'none',
-                         borderRadius: '8px',
-                         cursor: 'pointer',
-                         fontWeight: 'bold',
-                         whiteSpace: 'nowrap'
-                       }}
-                       onMouseEnter={(e) => {
-                         e.target.style.backgroundColor = '#dc2626';
-                       }}
-                       onMouseLeave={(e) => {
-                         e.target.style.backgroundColor = '#ef4444';
-                       }}
+                       className="block-delete-btn"
                      >
                        🗑️ Delete
                      </button>
@@ -575,7 +833,7 @@ export default function AdminDashboard() {
                })}
              </div>
            ) : (
-             <p style={{ color: '#d97706', padding: '16px', backgroundColor: '#fef3c7', borderRadius: '4px' }}>
+             <p className="block-empty-msg">
                ⚠️ No blocks exist yet. Add a block using the form above.
              </p>
            )}

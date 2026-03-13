@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 
 const roleConfig = {
+  principal: {
+    title: "Admin / Principal Login",
+    icon: "🛡️",
+    iconBg: "#ede9fe",
+    iconColor: "#7c3aed",
+  },
   admin: {
     title: "Admin / Principal Login",
     icon: "🛡️",
@@ -13,6 +20,12 @@ const roleConfig = {
     icon: "👥",
     iconBg: "#d1fae5",
     iconColor: "#059669",
+  },
+  staff: {
+    title: "Staff Login",
+    icon: "👨‍🏫",
+    iconBg: "#fef3c7",
+    iconColor: "#d97706",
   },
   student: {
     title: "Student Login",
@@ -29,12 +42,46 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const config = roleConfig[role] || roleConfig.student;
 
-  const handleSubmit = (e) => {
+  const roleRouteMap = {
+    principal: "/admin/dashboard",
+    admin: "/admin/dashboard",
+    staff: "/hod/dashboard",
+    hod: "/hod/dashboard",
+    student: "/student/dashboard",
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate(`/${role}/dashboard`);
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      const res = await axios.post("/auth/login", {
+        email,
+        password,
+        role,
+      });
+
+      const apiRole = res.data.role || res.data.user?.role || role;
+
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+      }
+      if (res.data.user) {
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+      }
+
+      navigate(roleRouteMap[apiRole] || "/student/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -104,13 +151,15 @@ export default function LoginPage() {
           </div>
 
           <button type="submit" className="login-button">
-            Sign In
+            {isSubmitting ? "Signing In..." : "Sign In"}
           </button>
         </form>
 
+        {error && <p style={{ color: "#dc2626", marginTop: "12px" }}>{error}</p>}
+
         <div className="demo-note">
-          <strong>Demo:</strong> Enter any email and password to access the
-          dashboard
+          <strong>Demo:</strong> Login is connected to backend API and routes by
+          your role.
         </div>
       </div>
     </div>

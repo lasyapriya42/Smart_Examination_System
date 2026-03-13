@@ -71,10 +71,18 @@ export const addRoom = async (req, res) => {
       return res.status(404).json({ message: "Block not found" });
     }
 
+    const parsedCapacity = capacity === undefined || capacity === null || capacity === ""
+      ? 30
+      : Number(capacity);
+
+    if (!Number.isFinite(parsedCapacity) || parsedCapacity <= 0) {
+      return res.status(400).json({ message: "Capacity must be greater than 0" });
+    }
+
     const room = new Room({
       number,
       block,
-      capacity: capacity || 30,
+      capacity: parsedCapacity,
     });
 
     await room.save();
@@ -128,7 +136,7 @@ export const updateRoom = async (req, res) => {
 
     if (isNaN(parsedCapacity) || parsedCapacity <= 0) {
       return res.status(400).json({
-        message: "Capacity must be a valid number",
+        message: "Capacity must be greater than 0",
       });
     }
 

@@ -20,6 +20,15 @@ export const getStaffGrouped = async (req, res) => {
   }
 };
 
+export const getStaff = async (req, res) => {
+  try {
+    const staff = await Staff.find().sort({ department: 1, staffId: 1 });
+    res.json(staff);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Create staff
 export const createStaff = async (req, res) => {
   try {
@@ -38,5 +47,36 @@ export const createStaff = async (req, res) => {
     res.status(201).json(newStaff);
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+};
+
+export const updateStaff = async (req, res) => {
+  try {
+    const updated = await Staff.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updated) {
+      return res.status(404).json({ message: "Staff not found" });
+    }
+
+    return res.json(updated);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+};
+
+export const deleteStaff = async (req, res) => {
+  try {
+    const deleted = await Staff.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Staff not found" });
+    }
+
+    return res.json({ message: "Staff deleted successfully" });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
   }
 };

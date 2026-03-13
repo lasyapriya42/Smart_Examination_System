@@ -6,23 +6,12 @@ export default function SelectSection() {
   const location = useLocation();
   const studentData = location.state?.studentData || {};
 
-  // Define sections for each department
-  const departmentSections = {
-    CSE: ["A", "B", "C"],
-    IT: ["A", "B", "C"],
-    AIML: ["A", "B"],
-    AIDS: ["A", "B"],
-    ECE: ["A", "B"],
-    EEE: ["A", "B"],
-    ME: ["A"],
-    CE: ["A"],
-  };
-
-  const allSections = departmentSections[dept] || [];
+  const allSections = Object.keys(studentData?.[year]?.[dept] || {});
+  const sectionOptions = ["ALL", ...allSections];
 
   const handleSectionSelect = (section) => {
     // Check if section has data
-    if (!studentData[year]?.[dept]?.[section]) {
+    if (section !== "ALL" && !studentData[year]?.[dept]?.[section]) {
       alert(`No student data available for Section ${section}`);
       return;
     }
@@ -68,16 +57,22 @@ export default function SelectSection() {
         </div>
 
         <div className="selection-grid">
-          {allSections.map((section) => (
-            <button
-              key={section}
-              className="selection-card"
-              onClick={() => handleSectionSelect(section)}
-            >
-              <span className="card-icon">👥</span>
-              <span className="card-text">Section {section}</span>
-            </button>
-          ))}
+          {sectionOptions.length > 0 ? (
+            sectionOptions.map((section) => (
+              <button
+                key={section}
+                className="selection-card"
+                onClick={() => handleSectionSelect(section)}
+              >
+                <span className="card-icon">👥</span>
+                <span className="card-text">
+                  {section === "ALL" ? "All Sections" : `Section ${section}`}
+                </span>
+              </button>
+            ))
+          ) : (
+            <p className="no-data">No sections available for {dept} in Year {year}</p>
+          )}
         </div>
       </div>
     </div>

@@ -6,17 +6,7 @@ export default function SelectDepartment() {
   const location = useLocation();
   const studentData = location.state?.studentData || {};
 
-  // All available departments
-  const allDepartments = [
-    { code: "CSE", name: "Computer Science and Engineering (CSE)" },
-    { code: "IT", name: "Information Technology (IT)" },
-    { code: "AIML", name: "Artificial Intelligence and Machine Learning (AIML)" },
-    { code: "AIDS", name: "Artificial Intelligence and Data Science (AIDS)" },
-    { code: "ECE", name: "Electronics and Communication Engineering (ECE)" },
-    { code: "EEE", name: "Electrical and Electronics Engineering (EEE)" },
-    { code: "ME", name: "Mechanical Engineering (ME)" },
-    { code: "CE", name: "Civil Engineering (CE)" },
-  ];
+  const departments = Object.keys(studentData?.[year] || {});
 
   const handleDeptSelect = (dept) => {
     // Check if department has data
@@ -46,16 +36,20 @@ export default function SelectDepartment() {
         </div>
 
         <div className="selection-grid">
-          {allDepartments.map((dept) => (
-            <button
-              key={dept.code}
-              className="selection-card"
-              onClick={() => handleDeptSelect(dept.code)}
-            >
-              <span className="card-icon">🏢</span>
-              <span className="card-text">{dept.name}</span>
-            </button>
-          ))}
+          {departments.length > 0 ? (
+            departments.map((dept) => (
+              <button
+                key={dept}
+                className="selection-card"
+                onClick={() => handleDeptSelect(dept)}
+              >
+                <span className="card-icon">🏢</span>
+                <span className="card-text">{dept}</span>
+              </button>
+            ))
+          ) : (
+            <p className="no-data">No departments available for Year {year}</p>
+          )}
         </div>
       </div>
     </div>
