@@ -12,6 +12,67 @@ export default function BlockRooms() {
   const [roomForm, setRoomForm] = useState({ number: "", capacity: "" });
   const [editingRoomId, setEditingRoomId] = useState(null);
   const [editCapacity, setEditCapacity] = useState("");
+  const [feedback, setFeedback] = useState({ type: "", text: "" });
+  const [modalState, setModalState] = useState({
+    open: false,
+    type: "info",
+    title: "",
+    message: "",
+    confirmText: "OK",
+    cancelText: "Cancel",
+    onConfirm: null,
+  });
+
+  const showFeedback = (type, text) => {
+    setFeedback({ type, text });
+    setTimeout(() => setFeedback({ type: "", text: "" }), 2500);
+  };
+
+  const openInfoModal = (message, title = "Notice") => {
+    setModalState({
+      open: true,
+      type: "info",
+      title,
+      message,
+      confirmText: "OK",
+      cancelText: "",
+      onConfirm: null,
+    });
+  };
+
+  const openConfirmModal = ({ title, message, onConfirm, confirmText = "Confirm" }) => {
+    setModalState({
+      open: true,
+      type: "confirm",
+      title,
+      message,
+      confirmText,
+      cancelText: "Cancel",
+      onConfirm,
+    });
+  };
+
+  const closeModal = () => {
+    setModalState((prev) => ({ ...prev, open: false, onConfirm: null }));
+  };
+
+  const handleModalConfirm = async () => {
+    const action = modalState.onConfirm;
+    closeModal();
+    if (typeof action === "function") {
+      await action();
+    }
+  };
+
+  const fetchRoomsByBlock = async () => {
+    const res = await axios.get("http://localhost:5000/api/rooms");
+    const filteredRooms = (res.data || []).filter(
+      (room) =>
+        (room.block && typeof room.block === "object" && room.block._id === block._id) ||
+        (room.block && typeof room.block === "string" && room.block === block._id)
+    );
+    setRoomsData(filteredRooms);
+  };
 
   useEffect(() => {
     if (!block) {
@@ -19,21 +80,9 @@ export default function BlockRooms() {
       return;
     }
 
-    // Fetch all rooms and filter by block
-    axios
-      .get("http://localhost:5000/api/rooms")
-      .then((res) => {
-        const filteredRooms = res.data.filter(room => 
-          (room.block && typeof room.block === 'object' && room.block._id === block._id) ||
-          (room.block && typeof room.block === 'string' && room.block === block._id)
-        );
-        setRoomsData(filteredRooms);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching rooms:", err);
-        setLoading(false);
-      });
+    fetchRoomsByBlock()
+      .catch((err) => console.error("Error fetching rooms:", err))
+      .finally(() => setLoading(false));
   }, [block, navigate]);
 
   const handleAddRoom = async (e) => {
@@ -42,76 +91,56 @@ export default function BlockRooms() {
       await axios.post("http://localhost:5000/api/rooms", {
         ...roomForm,
         block: block._id,
-        capacity: parseInt(roomForm.capacity) || 30
+        capacity: parseInt(roomForm.capacity) || 30,
       });
-      alert("Room added successfully!");
+      showFeedback("success", "Room added successfully");
       setRoomForm({ number: "", capacity: "" });
-      
-      // Refresh rooms
-      const res = await axios.get("http://localhost:5000/api/rooms");
-      const filteredRooms = res.data.filter(room => 
-        (room.block && typeof room.block === 'object' && room.block._id === block._id) ||
-        (room.block && typeof room.block === 'string' && room.block === block._id)
-      );
-      setRoomsData(filteredRooms);
+      await fetchRoomsByBlock();
     } catch (err) {
       console.error("Error adding room:", err);
-      alert("Error adding room");
+      openInfoModal("Unable to add room right now. Please try again.", "Request Failed");
     }
   };
 
   const handleDeleteRoom = async (roomId) => {
-    if (window.confirm("Are you sure you want to delete this room?")) {
-      try {
-        await axios.delete(`http://localhost:5000/api/rooms/${roomId}`);
-        alert("Room deleted successfully!");
-        setRoomsData(roomsData.filter(room => room._id !== roomId));
-      } catch (err) {
-        console.error("Error deleting room:", err);
-        alert("Error deleting room");
-      }
-    }
+    openConfirmModal({
+      title: "Delete Room",
+      message: "Are you sure you want to delete this room?",
+      confirmText: "Delete",
+      onConfirm: async () => {
+        try {
+          await axios.delete(`http://localhost:5000/api/rooms/${roomId}`);
+          showFeedback("success", "Room deleted successfully");
+          setRoomsData((prev) => prev.filter((room) => room._id !== roomId));
+        } catch (err) {
+          console.error("Error deleting room:", err);
+          openInfoModal("Unable to delete room right now.", "Request Failed");
+        }
+      },
+    });
   };
 
   const handleEditCapacity = async (roomId, newCapacity) => {
-  if (!newCapacity || isNaN(newCapacity)) {
-    alert("Please enter valid capacity");
-    return;
-  }
+    if (!newCapacity || isNaN(newCapacity)) {
+      openInfoModal("Please enter a valid numeric capacity.", "Invalid Input");
+      return;
+    }
 
-  try {
-    await axios.put(
-      `http://localhost:5000/api/rooms/${roomId}`,
-      {
+    try {
+      await axios.put(`http://localhost:5000/api/rooms/${roomId}`, {
         capacity: Number(newCapacity),
-      }
-    );
+      });
 
-    alert("Room capacity updated successfully!");
+      showFeedback("success", "Room capacity updated successfully");
+      await fetchRoomsByBlock();
+      setEditingRoomId(null);
+      setEditCapacity("");
+    } catch (err) {
+      console.error(err.response?.data || err);
+      openInfoModal("Unable to update room capacity right now.", "Request Failed");
+    }
+  };
 
-    const res = await axios.get(
-      "http://localhost:5000/api/rooms"
-    );
-
-    const filteredRooms = res.data.filter(
-      (room) =>
-        (room.block &&
-          typeof room.block === "object" &&
-          room.block._id === block._id) ||
-        (room.block &&
-          typeof room.block === "string" &&
-          room.block === block._id)
-    );
-
-    setRoomsData(filteredRooms);
-    setEditingRoomId(null);
-    setEditCapacity("");
-
-  } catch (err) {
-    console.error(err.response?.data || err);
-    alert("Error updating room capacity");
-  }
-};
   if (!block) return null;
 
   return (
@@ -119,10 +148,7 @@ export default function BlockRooms() {
       {/* ================= SIDEBAR ================= */}
       <aside className="sidebar">
         <div className="sidebar-header">
-          <div
-            className="sidebar-logo"
-            style={{ background: "#ede9fe", color: "#7c3aed" }}
-          >
+          <div className="sidebar-logo">
             🛡️
           </div>
           <div>
@@ -132,243 +158,195 @@ export default function BlockRooms() {
         </div>
 
         <nav className="sidebar-nav">
+          <p className="nav-label">Navigation</p>
+
           <button
             className="nav-item"
-            onClick={() =>
-  navigate("/admin/dashboard", {
-    state: { openSection: "blocks" },
-  })
-}
-            style={{ cursor: "pointer" }}
+            onClick={() => navigate("/admin/dashboard", { state: { openSection: "dashboard" } })}
           >
-            <span>⬅️</span> Back to Blocks
+            <span>📊</span> Dashboard
+          </button>
+
+          <button
+            className="nav-item"
+            onClick={() => navigate("/admin/dashboard", { state: { openSection: "students" } })}
+          >
+            <span>👥</span> Student Management
+          </button>
+
+          <button
+            className="nav-item"
+            onClick={() => navigate("/admin/dashboard", { state: { openSection: "staff" } })}
+          >
+            <span>👨‍💼</span> Staff Management
+          </button>
+
+          <button
+            className="nav-item active"
+            onClick={() =>
+              navigate("/admin/dashboard", {
+                state: { openSection: "blocks" },
+              })
+            }
+          >
+            <span>🏫</span> Blocks & Rooms
           </button>
         </nav>
+
+        <div className="sidebar-user">
+          <div className="user-avatar">AD</div>
+          <div>
+            <strong>Admin User</strong>
+            <span>user@example.com</span>
+          </div>
+        </div>
+
+        <button className="logout-button" onClick={() => navigate("/")}>
+          🚪 Logout
+        </button>
       </aside>
 
       {/* ================= MAIN CONTENT ================= */}
-      <main className="main-content">
+      <main className="dashboard-main">
+        <header className="dashboard-header">
+          <button className="menu-toggle">☰</button>
+        </header>
+
+        <div className="dashboard-content">
+        {feedback.text && <div className={`admin-feedback ${feedback.type}`}>{feedback.text}</div>}
+
         <div className="page-header">
-          <h1>📦 Block {block.name}</h1>
+          <h1>Block {block.name}</h1>
           <p>Manage rooms and their capacity</p>
         </div>
 
-        {/* ================= ADD ROOM FORM ================= */}
-        <div style={{
-          backgroundColor: '#f0f9ff',
-          border: '2px solid #0ea5e9',
-          borderRadius: '12px',
-          padding: '24px',
-          marginBottom: '32px'
-        }}>
-          <h3 style={{ marginTop: 0, color: '#0284c7' }}>➕ Add New Room</h3>
-          
-          <form onSubmit={handleAddRoom} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <div style={{ flex: '1 1 200px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#333' }}>Room Number</label>
+        <div className="student-form-card room-form-card">
+          <h3>Add New Room</h3>
+
+          <form onSubmit={handleAddRoom} className="room-form-inline">
+            <div className="form-group room-form-field">
+              <label>Room Number</label>
               <input
                 value={roomForm.number}
                 name="number"
                 onChange={(e) => setRoomForm({ ...roomForm, number: e.target.value })}
                 placeholder="e.g., 101, 102"
                 required
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #0ea5e9',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
               />
             </div>
 
-            <div style={{ flex: '1 1 150px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#333' }}>Capacity</label>
+            <div className="form-group room-form-field room-capacity-field">
+              <label>Capacity</label>
               <input
                 type="number"
                 value={roomForm.capacity}
                 name="capacity"
                 onChange={(e) => setRoomForm({ ...roomForm, capacity: e.target.value })}
                 placeholder="e.g., 30"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #0ea5e9',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
               />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-              <button type="submit" style={{
-                padding: '12px 24px',
-                backgroundColor: '#0284c7',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                fontSize: '14px'
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#0369a1'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#0284c7'}
-              >
+            <div className="room-submit-wrap">
+              <button type="submit" className="block-add-btn room-submit-btn">
                 + Add Room
               </button>
             </div>
           </form>
         </div>
 
-        {/* ================= ROOMS LIST ================= */}
         <div>
-          <h3 style={{ marginBottom: '20px' }}>🚪 Rooms in Block {block.name}</h3>
-          
-          {loading ? (
-            <p style={{ textAlign: 'center', color: '#666' }}>Loading rooms...</p>
-          ) : roomsData && roomsData.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-              {roomsData.map((room) => (
-                <div key={room._id} style={{
-                  backgroundColor: 'white',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(124, 58, 237, 0.15)';
-                  e.currentTarget.style.borderColor = '#7c3aed';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-                  e.currentTarget.style.borderColor = '#e5e7eb';
-                }}
-                >
-                  {/* Room Number */}
-                  <h4 style={{ margin: '0 0 16px 0', color: '#7c3aed', fontSize: '18px' }}>
-                    🏛️ Room {room.number}
-                  </h4>
+          <h3 className="rooms-heading">Rooms in Block {block.name}</h3>
 
-                  {/* Capacity Section */}
-                  <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#f3f4f6', borderRadius: '8px' }}>
+          {loading ? (
+            <p className="no-data">Loading rooms...</p>
+          ) : roomsData && roomsData.length > 0 ? (
+            <div className="rooms-grid">
+              {roomsData.map((room) => (
+                <div key={room._id} className="room-card">
+                  <h4 className="room-card-title">Room {room.number}</h4>
+
+                  <div className="room-capacity-panel">
                     {editingRoomId === room._id ? (
-                      <div style={{ display: 'flex', gap: '8px' }}>
+                      <div className="room-edit-row">
                         <input
                           type="number"
                           value={editCapacity}
                           onChange={(e) => setEditCapacity(e.target.value)}
-                          style={{
-                            flex: 1,
-                            padding: '8px',
-                            border: '2px solid #7c3aed',
-                            borderRadius: '6px',
-                            fontSize: '14px'
-                          }}
+                          className="room-edit-input"
                           autoFocus
                         />
                         <button
+                          type="button"
+                          className="btn-primary room-small-btn"
                           onClick={() => handleEditCapacity(room._id, editCapacity)}
-                          style={{
-                            padding: '8px 12px',
-                            backgroundColor: '#10b981',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            fontSize: '13px'
-                          }}
                         >
-                          ✓
+                          Save
                         </button>
                         <button
+                          type="button"
+                          className="btn-muted room-small-btn"
                           onClick={() => setEditingRoomId(null)}
-                          style={{
-                            padding: '8px 12px',
-                            backgroundColor: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            fontSize: '13px'
-                          }}
                         >
-                          ✕
+                          Cancel
                         </button>
                       </div>
                     ) : (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="room-capacity-row">
                         <div>
-                          <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#666' }}>Capacity</p>
-                          <p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#7c3aed' }}>
-                            👥 {room.capacity} students
-                          </p>
+                          <p className="room-meta-label">Capacity</p>
+                          <p className="room-capacity-value">{room.capacity} students</p>
                         </div>
                         <button
+                          type="button"
+                          className="btn-primary room-small-btn"
                           onClick={() => {
                             setEditingRoomId(room._id);
                             setEditCapacity(room.capacity);
                           }}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#3b82f6',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            fontWeight: 'bold'
-                          }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
                         >
-                          ✏️ Edit
+                          Edit
                         </button>
                       </div>
                     )}
                   </div>
 
-                  {/* Delete Button */}
                   <button
+                    type="button"
                     onClick={() => handleDeleteRoom(room._id)}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      backgroundColor: '#ef4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontWeight: 'bold',
-                      fontSize: '14px',
-                      transition: 'background-color 0.3s'
-                    }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = '#dc2626'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = '#ef4444'}
+                    className="block-delete-btn room-delete-btn"
                   >
-                    🗑️ Delete Room
+                    Delete Room
                   </button>
                 </div>
               ))}
             </div>
           ) : (
-            <div style={{
-              backgroundColor: '#fef3c7',
-              border: '2px solid #fcd34d',
-              borderRadius: '12px',
-              padding: '24px',
-              textAlign: 'center'
-            }}>
-              <p style={{ margin: 0, color: '#92400e', fontSize: '16px' }}>
-                📭 No rooms added in this block yet. Add one using the form above.
-              </p>
-            </div>
+            <p className="block-empty-msg">No rooms added in this block yet. Add one using the form above.</p>
           )}
+        </div>
+
+        {modalState.open && (
+          <div className="admin-modal-overlay" role="dialog" aria-modal="true">
+            <div className="admin-modal">
+              <h3>{modalState.title}</h3>
+              <p>{modalState.message}</p>
+              <div className="admin-modal-actions">
+                {modalState.type === "confirm" && (
+                  <button type="button" className="btn-muted" onClick={closeModal}>
+                    {modalState.cancelText}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={modalState.type === "confirm" ? "btn-danger" : "btn-primary"}
+                  onClick={handleModalConfirm}
+                >
+                  {modalState.confirmText}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         </div>
       </main>
     </div>

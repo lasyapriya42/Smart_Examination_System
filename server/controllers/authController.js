@@ -2,6 +2,10 @@ import jwt from "jsonwebtoken";
 import Student from "../models/Student.js";
 import Staff from "../models/Staff.js";
 
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const normalize = (value) => String(value || "").trim().toLowerCase();
+
 const normalizeRole = (role) => {
   const raw = String(role || "").toLowerCase();
 
@@ -30,7 +34,7 @@ export const login = async (req, res) => {
   }
 
   let userId = "";
-  let userEmail = String(email).toLowerCase();
+  let userEmail = normalize(email);
 
   if (normalizedRole === "admin") {
     const adminEmail = (process.env.ADMIN_EMAIL || "admin@examsmart.com").toLowerCase();
@@ -60,19 +64,37 @@ export const login = async (req, res) => {
   }
 
   if (normalizedRole === "student") {
-    const student = await Student.findOne({ email: userEmail });
+    const localPart = userEmail.split("@")[0] || "";
+
+    // Primary path: email lookup (case-insensitive)
+    let student = await Student.findOne({
+      email: { $regex: `^${escapeRegex(userEmail)}$`, $options: "i" },
+    });
+
+    // Fallback path: allow canonical college email (rollNo@svecw.edu.in)
+    if (!student && userEmail.endsWith("@svecw.edu.in") && localPart) {
+      student = await Student.findOne({
+        rollNo: { $regex: `^${escapeRegex(localPart)}$`, $options: "i" },
+      });
+    }
 
     if (!student) {
       return res.status(404).json({ message: "Student user not found" });
     }
 
-    const expectedPassword = student.rollNo;
-    if (password !== expectedPassword) {
-      return res.status(401).json({ message: "Invalid student password" });
+    // Student password: roll/register number in lowercase letters + digits.
+    const enteredPassword = normalize(password);
+    const expectedPassword = normalize(student.rollNo);
+    if (!/^[a-z0-9]+$/.test(enteredPassword)) {
+      return res.status(401).json({ message: "Password must contain only lowercase letters and numbers" });
+    }
+
+    if (enteredPassword !== expectedPassword) {
+      return res.status(401).json({ message: "Invalid student password. Use your roll/register number in lowercase" });
     }
 
     userId = String(student._id);
-    userEmail = student.email;
+    userEmail = normalize(student.email);
   }
 
   const token = jwt.sign(

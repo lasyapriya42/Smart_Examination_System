@@ -7,7 +7,7 @@ export default function HodDashboard() {
     <div className="dashboard-layout">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <div className="sidebar-logo" style={{ background: "#d1fae5", color: "#059669" }}>
+          <div className="sidebar-logo">
             👥
           </div>
           <div>
@@ -42,7 +42,7 @@ export default function HodDashboard() {
         </nav>
 
         <div className="sidebar-user">
-          <div className="user-avatar" style={{ background: "#059669" }}>HD</div>
+          <div className="user-avatar">HD</div>
           <div>
             <strong>HOD User</strong>
             <span>user@example.com</span>
@@ -73,7 +73,7 @@ export default function HodDashboard() {
             <div className="stat-card">
               <div className="stat-header">
                 <span>Faculty Members</span>
-                <span className="stat-icon" style={{ color: "#3b82f6" }}>👥</span>
+                <span className="stat-icon">👥</span>
               </div>
               <div className="stat-value">18</div>
               <div className="stat-trend positive">📈 +2 this semester</div>
@@ -81,7 +81,7 @@ export default function HodDashboard() {
             <div className="stat-card">
               <div className="stat-header">
                 <span>Question Bank</span>
-                <span className="stat-icon" style={{ color: "#3b82f6" }}>📚</span>
+                <span className="stat-icon">📚</span>
               </div>
               <div className="stat-value">456</div>
               <div className="stat-trend positive">📈 +34 this semester</div>
@@ -89,7 +89,7 @@ export default function HodDashboard() {
             <div className="stat-card">
               <div className="stat-header">
                 <span>Active Exams</span>
-                <span className="stat-icon" style={{ color: "#f59e0b" }}>📋</span>
+                <span className="stat-icon">📋</span>
               </div>
               <div className="stat-value">6</div>
               <div className="stat-trend positive">📈 +1 this semester</div>
@@ -97,7 +97,7 @@ export default function HodDashboard() {
             <div className="stat-card">
               <div className="stat-header">
                 <span>Pending Reviews</span>
-                <span className="stat-icon" style={{ color: "#ef4444" }}>📄</span>
+                <span className="stat-icon">📄</span>
               </div>
               <div className="stat-value">12</div>
               <div className="stat-trend negative">📈 -3 this semester</div>
@@ -164,7 +164,7 @@ export default function HodDashboard() {
             <p className="section-subtitle">Overview of faculty contributions</p>
             <div className="faculty-list">
               <div className="faculty-item">
-                <div className="faculty-avatar" style={{ background: "#14b8a6", color: "#fff" }}>DSJ</div>
+                <div className="faculty-avatar">DSJ</div>
                 <div className="faculty-info">
                   <strong>Dr. Sarah Johnson</strong>
                   <span>3 subjects • 12 exams created</span>
@@ -176,7 +176,7 @@ export default function HodDashboard() {
                 </div>
               </div>
               <div className="faculty-item">
-                <div className="faculty-avatar" style={{ background: "#14b8a6", color: "#fff" }}>PMW</div>
+                <div className="faculty-avatar">PMW</div>
                 <div className="faculty-info">
                   <strong>Prof. Michael Williams</strong>
                   <span>2 subjects • 8 exams created</span>
@@ -188,7 +188,7 @@ export default function HodDashboard() {
                 </div>
               </div>
               <div className="faculty-item">
-                <div className="faculty-avatar" style={{ background: "#14b8a6", color: "#fff" }}>DEB</div>
+                <div className="faculty-avatar">DEB</div>
                 <div className="faculty-info">
                   <strong>Dr. Emily Brown</strong>
                   <span>4 subjects • 15 exams created</span>
@@ -207,19 +207,19 @@ export default function HodDashboard() {
             <p className="section-subtitle">Key metrics for this semester</p>
             <div className="overview-metrics">
               <div className="overview-metric">
-                <div className="overview-value" style={{ color: "#14b8a6" }}>245</div>
+                <div className="overview-value">245</div>
                 <div className="overview-label">Total Students</div>
               </div>
               <div className="overview-metric">
-                <div className="overview-value" style={{ color: "#10b981" }}>82%</div>
+                <div className="overview-value">82%</div>
                 <div className="overview-label">Pass Rate</div>
               </div>
               <div className="overview-metric">
-                <div className="overview-value" style={{ color: "#3b82f6" }}>18</div>
+                <div className="overview-value">18</div>
                 <div className="overview-label">Exams Conducted</div>
               </div>
               <div className="overview-metric">
-                <div className="overview-value" style={{ color: "#f59e0b" }}>4</div>
+                <div className="overview-value">4</div>
                 <div className="overview-label">Upcoming Exams</div>
               </div>
             </div>

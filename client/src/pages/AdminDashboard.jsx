@@ -5,6 +5,15 @@ import { useLocation } from "react-router-dom";
 
 export default function AdminDashboard() {
   const [feedback, setFeedback] = useState({ type: "", text: "" });
+  const [modalState, setModalState] = useState({
+    open: false,
+    type: "info",
+    title: "",
+    message: "",
+    confirmText: "OK",
+    cancelText: "Cancel",
+    onConfirm: null,
+  });
 
   // ========== STUDENT FORM ==========
   const [studentFormData, setStudentFormData] = useState({
@@ -132,6 +141,42 @@ export default function AdminDashboard() {
     setTimeout(() => setFeedback({ type: "", text: "" }), 2500);
   };
 
+  const openInfoModal = (message, title = "Notice") => {
+    setModalState({
+      open: true,
+      type: "info",
+      title,
+      message,
+      confirmText: "OK",
+      cancelText: "",
+      onConfirm: null,
+    });
+  };
+
+  const openConfirmModal = ({ title, message, onConfirm, confirmText = "Confirm" }) => {
+    setModalState({
+      open: true,
+      type: "confirm",
+      title,
+      message,
+      confirmText,
+      cancelText: "Cancel",
+      onConfirm,
+    });
+  };
+
+  const closeModal = () => {
+    setModalState((prev) => ({ ...prev, open: false, onConfirm: null }));
+  };
+
+  const handleModalConfirm = async () => {
+    const action = modalState.onConfirm;
+    closeModal();
+    if (typeof action === "function") {
+      await action();
+    }
+  };
+
   const handleBulkStudentUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -147,7 +192,7 @@ export default function AdminDashboard() {
 
       const skipped = res.data?.skipped || 0;
       const invalidCount = res.data?.invalidRows?.length || 0;
-      alert(
+      openInfoModal(
         `${res.data.message} (${res.data.count} inserted, ${skipped} duplicates skipped, ${invalidCount} invalid rows)`
       );
 
@@ -160,30 +205,13 @@ export default function AdminDashboard() {
       const missingColumns = err?.response?.data?.missingColumns;
 
       if (Array.isArray(missingColumns) && missingColumns.length > 0) {
-        alert(`${message}: ${missingColumns.join(", ")}`);
+        openInfoModal(`${message}: ${missingColumns.join(", ")}`, "Upload Failed");
       } else {
-        alert(message);
+        openInfoModal(message, "Upload Failed");
       }
     } finally {
       // Allow selecting the same file again if user retries.
       e.target.value = "";
-    }
-  };
-
-  const handleDeleteAllStudents = async () => {
-    const confirmed = window.confirm(
-      "This will permanently delete all student records. Continue?"
-    );
-    if (!confirmed) return;
-
-    try {
-      const res = await axios.post("http://localhost:5000/api/students/delete-bulk", {});
-      alert(`${res.data.message} (${res.data.deletedCount} deleted)`);
-      setStudentData({});
-      loadDashboardMetrics();
-    } catch (error) {
-      console.error(error);
-      alert(error?.response?.data?.message || "Failed to delete students");
     }
   };
 
@@ -328,10 +356,7 @@ export default function AdminDashboard() {
       {/* ================= SIDEBAR ================= */}
       <aside className="sidebar">
         <div className="sidebar-header">
-          <div
-            className="sidebar-logo"
-            style={{ background: "#ede9fe", color: "#7c3aed" }}
-          >
+          <div className="sidebar-logo">
             🛡️
           </div>
           <div>
@@ -378,10 +403,7 @@ export default function AdminDashboard() {
         </nav>
 
         <div className="sidebar-user">
-          <div
-            className="user-avatar"
-            style={{ background: "#7c3aed" }}
-          >
+          <div className="user-avatar">
             AD
           </div>
           <div>
@@ -579,15 +601,6 @@ export default function AdminDashboard() {
     accept=".csv,.xlsx,.xls,.pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf"
     onChange={handleBulkStudentUpload}
   />
-  <div style={{ marginTop: "12px" }}>
-    <button
-      type="button"
-      className="btn-danger"
-      onClick={handleDeleteAllStudents}
-    >
-      Delete All Students
-    </button>
-  </div>
 </div>
       </div>
     )}
@@ -809,20 +822,25 @@ export default function AdminDashboard() {
                      {/* Delete Button */}
                      <button
                        onClick={async () => {
-                         if (window.confirm(`Delete Block ${block.name}? This will also delete all rooms in this block.`)) {
-                           try {
-                             await axios.delete(`http://localhost:5000/api/blocks/${block._id}`);
-                             showFeedback("success", "Block deleted successfully");
-                             const res = await axios.get("http://localhost:5000/api/blocks");
-                             setBlocksData(res.data || []);
-                             const roomsRes = await axios.get("http://localhost:5000/api/rooms");
-                             setRoomsData(roomsRes.data || []);
-                             loadDashboardMetrics();
-                           } catch (err) {
-                             console.error(err);
-                             showFeedback("error", "Error deleting block");
-                           }
-                         }
+                         openConfirmModal({
+                           title: "Delete Block",
+                           message: `Delete Block ${block.name}? This will also delete all rooms in this block.`,
+                           confirmText: "Delete",
+                           onConfirm: async () => {
+                             try {
+                               await axios.delete(`http://localhost:5000/api/blocks/${block._id}`);
+                               showFeedback("success", "Block deleted successfully");
+                               const res = await axios.get("http://localhost:5000/api/blocks");
+                               setBlocksData(res.data || []);
+                               const roomsRes = await axios.get("http://localhost:5000/api/rooms");
+                               setRoomsData(roomsRes.data || []);
+                               loadDashboardMetrics();
+                             } catch (err) {
+                               console.error(err);
+                               showFeedback("error", "Error deleting block");
+                             }
+                           },
+                         });
                        }}
                        className="block-delete-btn"
                      >
@@ -962,6 +980,29 @@ export default function AdminDashboard() {
 )}
 
         </div>
+
+        {modalState.open && (
+          <div className="admin-modal-overlay" role="dialog" aria-modal="true">
+            <div className="admin-modal">
+              <h3>{modalState.title}</h3>
+              <p>{modalState.message}</p>
+              <div className="admin-modal-actions">
+                {modalState.type === "confirm" && (
+                  <button type="button" className="btn-muted" onClick={closeModal}>
+                    {modalState.cancelText}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={modalState.type === "confirm" ? "btn-danger" : "btn-primary"}
+                  onClick={handleModalConfirm}
+                >
+                  {modalState.confirmText}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

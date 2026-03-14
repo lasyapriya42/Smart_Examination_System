@@ -6,26 +6,26 @@ const roleConfig = {
   principal: {
     title: "Admin / Principal Login",
     icon: "🛡️",
-    iconBg: "#ede9fe",
-    iconColor: "#7c3aed",
+    iconBg: "#dbeafe",
+    iconColor: "#2563eb",
   },
   admin: {
     title: "Admin / Principal Login",
     icon: "🛡️",
-    iconBg: "#ede9fe",
-    iconColor: "#7c3aed",
+    iconBg: "#dbeafe",
+    iconColor: "#2563eb",
   },
   hod: {
     title: "Head of Department Login",
     icon: "👥",
-    iconBg: "#d1fae5",
-    iconColor: "#059669",
+    iconBg: "#dbeafe",
+    iconColor: "#2563eb",
   },
   staff: {
     title: "Staff Login",
     icon: "👨‍🏫",
-    iconBg: "#fef3c7",
-    iconColor: "#d97706",
+    iconBg: "#dbeafe",
+    iconColor: "#2563eb",
   },
   student: {
     title: "Student Login",
@@ -46,6 +46,7 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const config = roleConfig[role] || roleConfig.student;
+  const isStudentLogin = (role || "").toLowerCase() === "student";
 
   const roleRouteMap = {
     principal: "/admin/dashboard",
@@ -110,7 +111,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              placeholder={isStudentLogin ? "rollnumber@svecw.edu.in" : "Enter your email"}
               required
             />
           </div>
@@ -123,7 +124,7 @@ export default function LoginPage() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                placeholder={isStudentLogin ? "Enter roll number in lowercase" : "Enter your password"}
                 required
               />
               <button
@@ -155,11 +156,13 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {error && <p style={{ color: "#dc2626", marginTop: "12px" }}>{error}</p>}
+        {error && <p className="error" style={{ marginTop: "12px" }}>{error}</p>}
 
         <div className="demo-note">
-          <strong>Demo:</strong> Login is connected to backend API and routes by
-          your role.
+          <strong>Demo:</strong>{" "}
+          {isStudentLogin
+            ? "Use rollnumber@svecw.edu.in and password as roll/register number in lowercase letters and numbers."
+            : "Login is connected to backend API and routes by your role."}
         </div>
       </div>
     </div>

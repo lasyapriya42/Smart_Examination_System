@@ -7,7 +7,7 @@ export default function StaffDashboard() {
     <div className="dashboard-layout">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <div className="sidebar-logo" style={{ background: "#fef3c7", color: "#d97706" }}>
+          <div className="sidebar-logo">
             👨‍🏫
           </div>
           <div>
@@ -33,7 +33,7 @@ export default function StaffDashboard() {
         </nav>
 
         <div className="sidebar-user">
-          <div className="user-avatar" style={{ background: "#d97706" }}>SF</div>
+          <div className="user-avatar">SF</div>
           <div>
             <strong>Staff User</strong>
             <span>user@example.com</span>
